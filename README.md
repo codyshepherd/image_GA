@@ -77,9 +77,19 @@ Lakshmi
 
 ## Mutation
 
+Justin
+
 ## Fitness
 
+Daniel
+
 ## Population Generation
+
+Tanner
+
+## Unit Testing / Stopping Test
+
+Cody
 
 # Standards
 

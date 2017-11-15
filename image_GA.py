@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import PIL
 
 # Performance tuning parameters
 POPULATION_SIZE = 20
@@ -82,7 +83,15 @@ class Individual:
 
   def renderImage(self):
     """Renders a bitmaps from a list of shapes that should be overlayed"""
-    pass
+    for shape in self.shapes:
+      layer = PIL.Image.new('RGBA', (X_MAX, Y_MAX))
+      PIL.ImageDraw.Draw(layer).polygon(shape.vertexList, fill = shape.color)
+      if(final_image):
+        final_image = Image.alpha_composite(finalImage, layer)
+      else:
+        final_image = layer
+
+    return numpy.array(final_image)
 
   def measureFitness(self, originalImage):
     """Measures the fitness via sum of squared difference of pixel colors between orignal image and rendered solution. """

@@ -1,6 +1,8 @@
 import numpy as np
 import random
 from PIL import Image, ImageDraw
+import queue
+
 
 # Performance tuning parameters
 POPULATION_SIZE = 20
@@ -152,7 +154,32 @@ class Shape:
 
 
 #############################################################
-# Unit Tests
+# Global Functions 
+#
+#############################################################
+def evaluateStopCondition(fitnessQueue, maxLength, tolerance, maxFitness):
+  """Checks if the algorithm should stop.
+
+  Pushes the current maximum fitness on a queue and pops an older one off. 
+  When the difference between the current and old fitness is smaller than a
+  set tolerance the algorithm will stop. 
+  """
+  if(fitnessQueue.qsize() == maxLength): # Only pop value if queue is full
+    oldFitness = fitnessQueue.get()
+    if(maxFitness - oldFitness <= tolerance):
+      return True
+  fitnessQueue.put(maxFitness)
+  return False
+
+def printFitnessQueue(fitnessQueue):
+  """Debug function. Print a list of some of the recent fitness scores. """
+  i = 0
+  for fitness in fitnessQueue.queue:
+    print("Fitness " + str(i) + ": " + str(fitness))
+    i += 1
+
+#############################################################
+# Unit Tests 
 #
 #############################################################
 def classInstantiationTest():
@@ -211,8 +238,26 @@ def imageRenderingTest():
   # Instantiates individual that in turn will call renderImage
   individual = Individual([shape_1, shape_2, shape_3, shape_4, shape_5])
 
+def stopTest():
+  """Instantiate a fitnessQueue, fill it up, and test stop conditions.
+
+  Test will push growing fitnesses to the queue over time but the growth
+  will level off over time. When it passes some threshold the test should 
+  stop and print the queue. 
+  """
+  fitnessQueue = queue.Queue(MAX_FITNESS_QUEUE_LEN) # Create a queue
+  i = 0
+  j = 0
+  stop = False
+  while(not stop):
+    stop = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, 1, i)
+    i += 5-j # Adding higher fitness on each iteration but level off over time
+    if(j < 5): # Dont ever subtract performance over an iteration
+      j += .125
+  printFitnessQueue(fitnessQueue)
 
 #############################################################
 # Main Loop
 #
 #############################################################
+

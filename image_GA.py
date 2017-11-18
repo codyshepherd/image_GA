@@ -120,8 +120,8 @@ class Shape:
     If these are not provided a random set of vertices and a color will
     be chosen randomly
     """
-    if(vertexList):
-      self.vertexList =  np.array(vertexList, dtype = ('int, int')) # Needs to be an np array to keep it consistent in both cases
+    if(vertexList is not None): # if(vertexList) is not used because np array cannot be checked as boolean
+      self.vertexList =  vertexList
     else:
       vertices = []
       for i in range(NUM_VERTICES):
@@ -170,38 +170,43 @@ def classInstantiationTest():
 def imageRenderingTest():
   """Renders a Star formed of 5 overlapping triangle shapes"""
   # Triangle1
-  point_1 = (300,200)
-  point_2 = (500,800)
-  point_3 = (700,200)
+  point_1 = (300, 200)
+  point_2 = (500, 800)
+  point_3 = (700, 200)
+  vertexList_1 = np.array([point_1, point_2, point_3], dtype = ('int, int'))
 
   # Triangle2
-  point_4 = (700,200)
-  point_5 = (200,600)
-  point_6 = (800,600)
+  point_4 = (700, 200)
+  point_5 = (200, 600)
+  point_6 = (800, 600)
+  vertexList_2 = np.array([point_4, point_5, point_6], dtype = ('int, int'))
 
   # Triangle3
-  point_7 = (800,600)
-  point_8 = (300,200)
-  point_9 = (500,800)
+  point_7 = (800, 600)
+  point_8 = (300, 200)
+  point_9 = (500, 800)
+  vertexList_3 = np.array([point_7, point_8, point_9], dtype = ('int, int'))
 
   # Triangle4
-  point_10 = (500,800)
-  point_11 = (700,200)
-  point_12 = (200,600)
+  point_10 = (500, 800)
+  point_11 = (700, 200)
+  point_12 = (200, 600)
+  vertexList_4 = np.array([point_10, point_11, point_12], dtype = ('int, int'))
 
   # Triangle5
-  point_13 = (200,600)
-  point_14 = (800,600)
-  point_15 = (300,200)
+  point_13 = (200, 600)
+  point_14 = (800, 600)
+  point_15 = (300, 200)
+  vertexList_5 = np.array([point_13, point_14, point_15], dtype = ('int, int'))
 
   # Instantiates shape object for all triangles
   ## Order of the co-ordinates matter in a way that first and last
   ## coordinates should be connected as one of polygon boundries
-  shape_1 = Shape([point_1, point_2, point_3], (250,10,10,50))
-  shape_2 = Shape([point_4, point_5, point_6], (10,250,10,50))
-  shape_3 = Shape([point_7, point_8, point_9], (10,10,250,50))
-  shape_4 = Shape([point_10, point_11, point_12], (250,10,10,50))
-  shape_5 = Shape([point_13, point_14, point_15], (10,250,10,50))
+  shape_1 = Shape(vertexList_1, (250,10,10,50))
+  shape_2 = Shape(vertexList_2, (10,250,10,50))
+  shape_3 = Shape(vertexList_3, (10,10,250,50))
+  shape_4 = Shape(vertexList_4, (250,10,10,50))
+  shape_5 = Shape(vertexList_5, (10,250,10,50))
 
   # Instantiates individual that in turn will call renderImage
   individual = Individual([shape_1, shape_2, shape_3, shape_4, shape_5])

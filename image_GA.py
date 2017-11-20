@@ -82,7 +82,7 @@ class Population:
     offspringA.image = offspringA.renderImage()
     offspringA.fitness = offspringA.measureFitness(IMAGE)
 
-    offspringA.image = offspringA.renderImage()
+    offspringB.image = offspringA.renderImage()
     offspringB.fitness = offspringB.measureFitness(IMAGE)
 
     """The following lines can be uncommented to list the parents 

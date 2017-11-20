@@ -132,7 +132,9 @@ class Individual:
 
   def measureFitness(self, originalImage):
     """Measures the fitness via sum of squared difference of pixel colors between orignal image and rendered solution. """
-    pass
+    if originalImage == None:
+      return 0
+    return np.sum((self.image-originalImage)**2)
 
   def mutate(self):
     """Mutate one or more shapes within the individual."""

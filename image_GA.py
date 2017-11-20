@@ -133,7 +133,7 @@ class Individual:
   def measureFitness(self, originalImage):
     """Measures the fitness via sum of squared difference of pixel colors between orignal image and rendered solution. """
     if originalImage == None:
-      return 0
+      raise TypeError("originalImage is None, must be numpy array")
     return np.sum((self.image-originalImage)**2)
 
   def mutate(self):

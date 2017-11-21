@@ -53,7 +53,39 @@ class Population:
 
   def crossover(self):
     """Randomly selects two members of the population and generates two children via crossover."""
-    pass
+    parentA = Individual()
+    parentB = Individual()
+
+    offspringA = Individual()
+    offspringB = Individual()
+
+    offspringA_temp_list = []
+    offspringB_temp_list = []
+
+    # Selects two random individuals from population as parents 
+
+    parentA.shapes = self.populationMembers[random.randrange(POPULATION_SIZE)].shapes
+    parentB.shapes = self.populationMembers[random.randrange(POPULATION_SIZE)].shapes
+   
+    cross_over_point = random.randrange(NUM_POLYGONS)
+  
+    # print ("Crossover point " + str(cross_over_point))
+
+    # Concatenates two parent arrays after splitting at the crossover point into a list
+    offspringA_temp_list =  np.concatenate((parentA.shapes[:cross_over_point],parentB.shapes[cross_over_point:]))
+    offspringB_temp_list =  np.concatenate((parentB.shapes[:cross_over_point],parentA.shapes[cross_over_point:]))
+    
+    offspringA.shapes = np.array(offspringA_temp_list)
+    offspringB.shapes = np.array( offspringB_temp_list)
+                                  
+    # Fitness is recalculated for new offspring
+    offspringA.image = offspringA.renderImage()
+    offspringA.fitness = offspringA.measureFitness(IMAGE)
+
+    offspringB.image = offspringB.renderImage()
+    offspringB.fitness = offspringB.measureFitness(IMAGE)
+    
+    return offspringA,offspringB
 
 
 class Individual:
@@ -194,6 +226,21 @@ def classInstantiationTest():
     for shape in individual.shapes:
       shape.print()
 
+def crossoverTest():
+  """Creates a population and calls the crossover method which returns two offspring
+     Prints the shapes in the offspring individual"""
+  population = Population()
+
+  print("Crossing over")
+  childA,childB = population.crossover()
+
+  print("CHILD A")
+  for shape in childA.shapes:
+    shape.print()
+  print("CHILD B")
+  for shape in childB.shapes:
+    shape.print()
+
 def imageRenderingTest():
   """Renders a Star formed of 5 overlapping triangle shapes"""
   # Triangle1
@@ -260,4 +307,3 @@ def stopTest():
 # Main Loop
 #
 #############################################################
-

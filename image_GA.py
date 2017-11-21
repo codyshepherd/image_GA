@@ -84,17 +84,7 @@ class Population:
 
     offspringB.image = offspringB.renderImage()
     offspringB.fitness = offspringB.measureFitness(IMAGE)
-
-    """The following lines can be uncommented to list the parents 
-
-    print ("ParentA")
-    for shape in parentA.shapes:
-      shape.print()
-  
-    print ("ParentB")
-    for shape in parentB.shapes:
-      shape.print() """
-  
+    
     return offspringA,offspringB
 
 

@@ -88,7 +88,6 @@ class Population:
     return offspringA,offspringB
 
 
-
 class Individual:
   """Defines a set of polygons which form an image.
 

@@ -51,21 +51,15 @@ class Population:
         populationArray.append(Individual())
       self.populationMembers = np.array(populationArray)
 
-  def crossover(self):
-    """Randomly selects two members of the population and generates two children via crossover."""
-    parentA = Individual()
-    parentB = Individual()
-
+  def crossover(self,parentA,parentB):
+    """Performs crossover of the two given parents of the population at a randomly generated crosspoint
+       and generates two children"""
+   
     offspringA = Individual()
     offspringB = Individual()
 
     offspringA_temp_list = []
     offspringB_temp_list = []
-
-    # Selects two random individuals from population as parents 
-
-    parentA.shapes = self.populationMembers[random.randrange(POPULATION_SIZE)].shapes
-    parentB.shapes = self.populationMembers[random.randrange(POPULATION_SIZE)].shapes
    
     cross_over_point = random.randrange(NUM_POLYGONS)
   
@@ -76,7 +70,7 @@ class Population:
     offspringB_temp_list =  np.concatenate((parentB.shapes[:cross_over_point],parentA.shapes[cross_over_point:]))
     
     offspringA.shapes = np.array(offspringA_temp_list)
-    offspringB.shapes = np.array( offspringB_temp_list)
+    offspringB.shapes = np.array(offspringB_temp_list)
                                   
     # Fitness is recalculated for new offspring
     offspringA.image = offspringA.renderImage()
@@ -227,12 +221,26 @@ def classInstantiationTest():
       shape.print()
 
 def crossoverTest():
-  """Creates a population and calls the crossover method which returns two offspring
-     Prints the shapes in the offspring individual"""
+  """Creates a population and calls the crossover method on two randomly generated parents
+     Prints the shapes in both parent and  offspring individual"""
   population = Population()
 
+  # Randomly generates two parents for time-being  
+  parentA = Individual()
+  parentB = Individual()
+
+  parentA.shapes = population.populationMembers[random.randrange(POPULATION_SIZE)].shapes
+  parentB.shapes = population.populationMembers[random.randrange(POPULATION_SIZE)].shapes
+
+  print("PARENT A")
+  for shape in parentA.shapes:
+    shape.print()
+  print("PARENT B")
+  for shape in parentB.shapes:
+    shape.print()
+
   print("Crossing over")
-  childA,childB = population.crossover()
+  childA,childB = population.crossover(parentA,parentB)
 
   print("CHILD A")
   for shape in childA.shapes:

@@ -132,8 +132,9 @@ class Individual:
 
   def mutate(self):
     """Mutate one or more shapes within the individual."""
-    pass
-
+    for shape in self.shapes:
+      if random.randrange(100) == SHAPE_MUTATION_PROB:
+        shape.mutate()
 
 class Shape:
   """Defines a single polygon.
@@ -173,7 +174,12 @@ class Shape:
 
   def mutate(self):
   	"""Mutates one or more vertex or the color of the polgyon."""
-  	pass
+    self.vertexList[random.randrange(NUM_VERTICES)] = self.randomVertex()
+    self.color = self.randomColor()
+
+    # Give chance for another vertex to be changed 
+    if random.randrange(100) ==  SHAPE_MUTATION_PROB:
+      self.vertexList[random.randrange(NUM_VERTICES)] = self.randomVertex()
 
   def print(self):
     """Print some debug information in an easy to read format"""

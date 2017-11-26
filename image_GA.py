@@ -18,6 +18,7 @@ ALPHA_MAX = 255
 # Mutation Probabilites
 CHILD_MUTATION_PROB = 30
 SHAPE_MUTATION_PROB = 10
+VERTEX_MUTATION_PROB = 50
 
 #Stop conditions
 TEST_STOP_TOLERANCE = .1
@@ -136,7 +137,7 @@ class Individual:
   def mutate(self):
     """Mutate one or more shapes within the individual."""
     for shape in self.shapes:
-      if random.randrange(100) == SHAPE_MUTATION_PROB:
+      if random.randrange(100) < SHAPE_MUTATION_PROB:
         shape.mutate()
 
 class Shape:
@@ -177,12 +178,14 @@ class Shape:
 
   def mutate(self):
   	"""Mutates one or more vertex or the color of the polgyon."""
-    self.vertexList[random.randrange(NUM_VERTICES)] = self.randomVertex()
+    guaranteed_mutation = randrange(NUM_VERTICES)
+    self.vertexList[guaranteed_mutation] = self.randomVertex()
     self.color = self.randomColor()
 
-    # Give chance for another vertex to be changed 
-    if random.randrange(100) ==  SHAPE_MUTATION_PROB:
-      self.vertexList[random.randrange(NUM_VERTICES)] = self.randomVertex()
+    for to_mutate in range(NUM_VERTICES):
+      if to_mutate != guaranteed_mutation:
+        if random.randrange(100) < VERTEX_MUTATION_PROB:
+          self.vertexList[to_mutate] = self.randomVertex()
 
   def print(self):
     """Print some debug information in an easy to read format"""

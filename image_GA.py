@@ -120,9 +120,12 @@ class Individual:
       ImageDraw.Draw(layer).polygon(shape.vertexList.tolist(), fill = shape.color) # tolist() provides required comma-separated input to polygon function
       finalImage = Image.alpha_composite(finalImage, layer)
 
-    # One can save the image to check rendering
-    finalImage.save("test_image_ga.jpg")
     return np.array(finalImage)
+
+  def saveImageToFile(self, fileName):
+    """ Creates image and saves it to file '<fileName>.png' """
+    image = Image.fromarray(self.image, 'RGBA')
+    image.save(fileName + ".png")
 
   def measureFitness(self, originalImage):
     """Measures the fitness via sum of squared difference of pixel colors between orignal image and rendered solution. """
@@ -212,6 +215,13 @@ def printFitnessQueue(fitnessQueue):
     print("Fitness " + str(i) + ": " + str(fitness))
     i += 1
 
+def readOriginalImageFromFile(filePath):
+  """ Opens the image at specified <filePath>, converts to RGBA numpy array and saves to IMAGE """
+  image = Image.open(filePath)
+  image = image.convert('RGBA')
+  global IMAGE
+  IMAGE = np.array(image)
+
 #############################################################
 # Unit Tests 
 #
@@ -259,6 +269,10 @@ def crossoverTest():
 
 def imageRenderingTest():
   """Renders a Star formed of 5 overlapping triangle shapes"""
+
+  # Need to read original image first of all to be able to measure fitness
+  readOriginalImageFromFile("INPUT.PNG")  
+
   # Triangle1
   point_1 = (300, 200)
   point_2 = (500, 800)
@@ -300,6 +314,11 @@ def imageRenderingTest():
 
   # Instantiates individual that in turn will call renderImage
   individual = Individual([shape_1, shape_2, shape_3, shape_4, shape_5])
+
+  # Prints fitness and saves output image to file 
+  print("Fitness achieved = " + str(individual.fitness))
+  individual.saveImageToFile("OUTPUT")
+
 
 def stopTest():
   """Instantiate a fitnessQueue, fill it up, and test stop conditions.

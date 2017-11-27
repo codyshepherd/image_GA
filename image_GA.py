@@ -17,7 +17,7 @@ ALPHA_MAX = 255
 
 # Mutation Probabilites
 CHILD_MUTATION_PROB = 30
-SHAPE_MUTATION_PROB = 10
+VERTEX_MUTATION_PROB = 10
 
 #Stop conditions
 TEST_STOP_TOLERANCE = .1
@@ -25,7 +25,8 @@ MAX_FITNESS_QUEUE_LEN = 100
 MAX_ITERATIONS = 100000
 
 #Input
-IMAGE = None
+IMAGE_FILE_PATH = "INPUT.PNG"
+IMAGE = np.array([])
 RANDOM_SEED = 1
 random.seed = RANDOM_SEED
 
@@ -51,9 +52,19 @@ class Population:
         populationArray.append(Individual())
       self.populationMembers = np.array(populationArray)
 
-  def crossover(self,parentA,parentB):
-    """Performs crossover of the two given parents of the population at a randomly generated crosspoint
-       and generates two children"""
+  @staticmethod
+  def crossover(parentA,parentB):
+    """
+    Performs crossover of the two given parents of the population at a randomly 
+    generated crosspoint and generates two children
+    
+    :param parentA: an individual
+    :param parentB: an individual
+    :return: a tuple of individuals
+    """
+    global IMAGE, IMAGE_FILE_PATH
+    if IMAGE.size == 0:
+        IMAGE = readOriginalImageFromFile(IMAGE_FILE_PATH)
    
     offspringA = Individual()
     offspringB = Individual()
@@ -107,6 +118,9 @@ class Individual:
       self.shapes = np.array(shapeArray)
 
     self.image = self.renderImage()
+    global IMAGE, IMAGE_FILE_PATH
+    if IMAGE.size == 0:
+        IMAGE = readOriginalImageFromFile(IMAGE_FILE_PATH)
     self.fitness = self.measureFitness(IMAGE)
 
   def renderImage(self):
@@ -128,16 +142,29 @@ class Individual:
     image.save(fileName + ".png")
 
   def measureFitness(self, originalImage):
-    """Measures the fitness via sum of squared difference of pixel colors between orignal image and rendered solution. """
-    if originalImage == None:
-      raise TypeError("originalImage is None, must be numpy array")
+    """
+    Measures the fitness via sum of squared difference of 
+    pixel colors between orignal image and rendered solution. 
+
+    :param originalImage: an nparray representing the comparison image
+    :return: double representing the squared difference between the two arrays
+    """
+    if type(originalImage) != type(self.image):
+      raise TypeError("images must be of same type!")
+
     return np.sum((self.image-originalImage)**2)
 
-  def mutate(self):
-    """Mutate one or more shapes within the individual."""
+  def mutate(self, prob):
+    """
+    Mutate one or more shapes within the individual.
+
+    :param prob: an integer on [0,100] that represents the probability with which we want
+                 the mutation to occur
+    :return: None
+    """
     for shape in self.shapes:
-      if random.randrange(100) == SHAPE_MUTATION_PROB:
-        shape.mutate()
+      if random.randrange(100) <= prob:
+        shape.mutate(VERTEX_MUTATION_PROB)
 
 class Shape:
   """Defines a single polygon.
@@ -175,14 +202,18 @@ class Shape:
   	""" Generate a random color tuple"""
   	return (random.randrange(RGB_MAX), random.randrange(RGB_MAX), random.randrange(RGB_MAX), random.randrange(ALPHA_MAX))
 
-  def mutate(self):
-  	"""Mutates one or more vertex or the color of the polgyon."""
-    self.vertexList[random.randrange(NUM_VERTICES)] = self.randomVertex()
+  def mutate(self, prob):
+    """
+    Mutates one or more vertex or the color of the polgyon.
+    
+    :param prob: integer on [0,100] representing the probability with which a vertex
+                 should be changed
+    :return: None
+    """
     self.color = self.randomColor()
-
-    # Give chance for another vertex to be changed 
-    if random.randrange(100) ==  SHAPE_MUTATION_PROB:
-      self.vertexList[random.randrange(NUM_VERTICES)] = self.randomVertex()
+    for i in range(len(self.vertexList)):
+        if random.randrange(100) <= prob:
+            self.vertexList[i] = self.randomVertex()
 
   def print(self):
     """Print some debug information in an easy to read format"""
@@ -216,11 +247,10 @@ def printFitnessQueue(fitnessQueue):
     i += 1
 
 def readOriginalImageFromFile(filePath):
-  """ Opens the image at specified <filePath>, converts to RGBA numpy array and saves to IMAGE """
+  """ Opens the image at specified <filePath>, converts to RGBA numpy array and returns it """
   image = Image.open(filePath)
   image = image.convert('RGBA')
-  global IMAGE
-  IMAGE = np.array(image)
+  return np.array(image)
 
 #############################################################
 # Unit Tests 

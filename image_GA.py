@@ -22,7 +22,7 @@ SHAPE_MUTATION_PROB = 10
 #Stop conditions
 TEST_STOP_TOLERANCE = .1
 MAX_FITNESS_QUEUE_LEN = 100
-MAX_ITERATIONS = 100000
+TEST_FREQUENCY = 100  # Measured in iterations. Dictates how often we check if we have rached the stopping condition
 
 #Input
 IMAGE = None
@@ -86,6 +86,14 @@ class Population:
     offspringB.fitness = offspringB.measureFitness(IMAGE)
     
     return offspringA,offspringB
+
+  def getMaxFitnessIndividual(self):
+    """Return the individual with the highest fitness"""
+    return max(self.populationMembers, key=lambda x: x.fitness)
+
+  def eliminateWeakest(self, child0, child1):
+  	"""Finds the two weakest members of the population, including the children and kills them off"""
+  	pass
 
 
 class Individual:
@@ -307,3 +315,14 @@ def stopTest():
 # Main Loop
 #
 #############################################################
+
+imagePopulation = Population()
+fitnessQueue = queue.Queue(MAX_FITNESS_QUEUE_LEN)
+maxFitnessIndividual = imagePopulation.getMaxFitenssIndividual()
+evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
+while(not evolutionComplete):
+  child0, child1 = imagePopulation.crossover()
+  child0.mutate()
+  child1.mutate()
+  imagePopulation.eliminateWeakest(child0,child1)
+  evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)

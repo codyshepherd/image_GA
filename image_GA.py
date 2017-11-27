@@ -18,6 +18,7 @@ ALPHA_MAX = 255
 # Mutation Probabilites
 CHILD_MUTATION_PROB = 30
 SHAPE_MUTATION_PROB = 10
+VERTEX_MUTATION_PROB = 50
 
 #Stop conditions
 TEST_STOP_TOLERANCE = .1
@@ -51,21 +52,15 @@ class Population:
         populationArray.append(Individual())
       self.populationMembers = np.array(populationArray)
 
-  def crossover(self):
-    """Randomly selects two members of the population and generates two children via crossover."""
-    parentA = Individual()
-    parentB = Individual()
-
+  def crossover(self,parentA,parentB):
+    """Performs crossover of the two given parents of the population at a randomly generated crosspoint
+       and generates two children"""
+   
     offspringA = Individual()
     offspringB = Individual()
 
     offspringA_temp_list = []
     offspringB_temp_list = []
-
-    # Selects two random individuals from population as parents 
-
-    parentA.shapes = self.populationMembers[random.randrange(POPULATION_SIZE)].shapes
-    parentB.shapes = self.populationMembers[random.randrange(POPULATION_SIZE)].shapes
    
     cross_over_point = random.randrange(NUM_POLYGONS)
   
@@ -76,7 +71,7 @@ class Population:
     offspringB_temp_list =  np.concatenate((parentB.shapes[:cross_over_point],parentA.shapes[cross_over_point:]))
     
     offspringA.shapes = np.array(offspringA_temp_list)
-    offspringB.shapes = np.array( offspringB_temp_list)
+    offspringB.shapes = np.array(offspringB_temp_list)
                                   
     # Fitness is recalculated for new offspring
     offspringA.image = offspringA.renderImage()
@@ -134,18 +129,24 @@ class Individual:
       ImageDraw.Draw(layer).polygon(shape.vertexList.tolist(), fill = shape.color) # tolist() provides required comma-separated input to polygon function
       finalImage = Image.alpha_composite(finalImage, layer)
 
-    # One can save the image to check rendering
-    finalImage.save("test_image_ga.jpg")
     return np.array(finalImage)
+
+  def saveImageToFile(self, fileName):
+    """ Creates image and saves it to file '<fileName>.png' """
+    image = Image.fromarray(self.image, 'RGBA')
+    image.save(fileName + ".png")
 
   def measureFitness(self, originalImage):
     """Measures the fitness via sum of squared difference of pixel colors between orignal image and rendered solution. """
-    pass
+    if originalImage == None:
+      raise TypeError("originalImage is None, must be numpy array")
+    return np.sum((self.image-originalImage)**2)
 
   def mutate(self):
     """Mutate one or more shapes within the individual."""
-    pass
-
+    for shape in self.shapes:
+      if random.randrange(100) < SHAPE_MUTATION_PROB:
+        shape.mutate()
 
 class Shape:
   """Defines a single polygon.
@@ -185,7 +186,14 @@ class Shape:
 
   def mutate(self):
   	"""Mutates one or more vertex or the color of the polgyon."""
-  	pass
+    guaranteed_mutation = randrange(NUM_VERTICES)
+    self.vertexList[guaranteed_mutation] = self.randomVertex()
+    self.color = self.randomColor()
+
+    for to_mutate in range(NUM_VERTICES):
+      if to_mutate != guaranteed_mutation:
+        if random.randrange(100) < VERTEX_MUTATION_PROB:
+          self.vertexList[to_mutate] = self.randomVertex()
 
   def print(self):
     """Print some debug information in an easy to read format"""
@@ -218,6 +226,13 @@ def printFitnessQueue(fitnessQueue):
     print("Fitness " + str(i) + ": " + str(fitness))
     i += 1
 
+def readOriginalImageFromFile(filePath):
+  """ Opens the image at specified <filePath>, converts to RGBA numpy array and saves to IMAGE """
+  image = Image.open(filePath)
+  image = image.convert('RGBA')
+  global IMAGE
+  IMAGE = np.array(image)
+
 #############################################################
 # Unit Tests 
 #
@@ -235,12 +250,26 @@ def classInstantiationTest():
       shape.print()
 
 def crossoverTest():
-  """Creates a population and calls the crossover method which returns two offspring
-     Prints the shapes in the offspring individual"""
+  """Creates a population and calls the crossover method on two randomly generated parents
+     Prints the shapes in both parent and  offspring individual"""
   population = Population()
 
+  # Randomly generates two parents for time-being  
+  parentA = Individual()
+  parentB = Individual()
+
+  parentA.shapes = population.populationMembers[random.randrange(POPULATION_SIZE)].shapes
+  parentB.shapes = population.populationMembers[random.randrange(POPULATION_SIZE)].shapes
+
+  print("PARENT A")
+  for shape in parentA.shapes:
+    shape.print()
+  print("PARENT B")
+  for shape in parentB.shapes:
+    shape.print()
+
   print("Crossing over")
-  childA,childB = population.crossover()
+  childA,childB = population.crossover(parentA,parentB)
 
   print("CHILD A")
   for shape in childA.shapes:
@@ -251,6 +280,10 @@ def crossoverTest():
 
 def imageRenderingTest():
   """Renders a Star formed of 5 overlapping triangle shapes"""
+
+  # Need to read original image first of all to be able to measure fitness
+  readOriginalImageFromFile("INPUT.PNG")  
+
   # Triangle1
   point_1 = (300, 200)
   point_2 = (500, 800)
@@ -292,6 +325,11 @@ def imageRenderingTest():
 
   # Instantiates individual that in turn will call renderImage
   individual = Individual([shape_1, shape_2, shape_3, shape_4, shape_5])
+
+  # Prints fitness and saves output image to file 
+  print("Fitness achieved = " + str(individual.fitness))
+  individual.saveImageToFile("OUTPUT")
+
 
 def stopTest():
   """Instantiate a fitnessQueue, fill it up, and test stop conditions.

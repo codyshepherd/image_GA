@@ -17,7 +17,10 @@ ALPHA_MAX = 255
 
 # Mutation Probabilites
 CHILD_MUTATION_PROB = 30
-VERTEX_MUTATION_PROB = 10
+
+SHAPE_MUTATION_PROB = 10
+VERTEX_MUTATION_PROB = 50
+
 
 #Stop conditions
 TEST_STOP_TOLERANCE = .1
@@ -165,6 +168,7 @@ class Individual:
     for shape in self.shapes:
       if random.randrange(100) <= prob:
         shape.mutate(VERTEX_MUTATION_PROB)
+
 
 class Shape:
   """Defines a single polygon.

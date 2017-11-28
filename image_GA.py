@@ -146,8 +146,8 @@ class Individual:
     for shape in self.shapes:
       if random.randrange(100) < SHAPE_MUTATION_PROB:
         shape.mutate()
-    self.renderImage()
-    self.measureFitness(IMAGE)
+    self.image = self.renderImage()
+    self.fitness = self.measureFitness(IMAGE)
 
 class Shape:
   """Defines a single polygon.

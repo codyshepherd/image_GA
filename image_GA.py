@@ -22,8 +22,7 @@ VERTEX_MUTATION_PROB = 50
 
 #Stop conditions
 TEST_STOP_TOLERANCE = .1
-MAX_FITNESS_QUEUE_LEN = 100
-TEST_FREQUENCY = 100  # Measured in iterations. Dictates how often we check if we have rached the stopping condition
+MAX_FITNESS_QUEUE_LEN = 20
 
 #Input
 IMAGE = None
@@ -83,8 +82,8 @@ class Population:
     return offspringA,offspringB
 
   def getMaxFitnessIndividual(self):
-    """Return the individual with the highest fitness"""
-    return max(self.populationMembers, key=lambda x: x.fitness)
+    """Return the individual with the best fitness"""
+    return min(self.populationMembers, key=lambda x: x.fitness) # Lower fitness values are better since they represent a difference measure between images
 
   def eliminateWeakest(self, child0, child1):
   	"""Finds the two weakest members of the population, including the children and kills them off"""
@@ -147,6 +146,7 @@ class Individual:
     for shape in self.shapes:
       if random.randrange(100) < SHAPE_MUTATION_PROB:
         shape.mutate()
+    self.measureFitness(IMAGE)
 
 class Shape:
   """Defines a single polygon.
@@ -185,8 +185,8 @@ class Shape:
   	return (random.randrange(RGB_MAX), random.randrange(RGB_MAX), random.randrange(RGB_MAX), random.randrange(ALPHA_MAX))
 
   def mutate(self):
-  	"""Mutates one or more vertex or the color of the polgyon."""
-    guaranteed_mutation = randrange(NUM_VERTICES)
+    """Mutates one or more vertex or the color of the polgyon."""
+    guaranteed_mutation = random.randrange(NUM_VERTICES)
     self.vertexList[guaranteed_mutation] = self.randomVertex()
     self.color = self.randomColor()
 
@@ -214,7 +214,7 @@ def evaluateStopCondition(fitnessQueue, maxLength, tolerance, maxFitness):
   """
   if(fitnessQueue.qsize() == maxLength): # Only pop value if queue is full
     oldFitness = fitnessQueue.get()
-    if(maxFitness - oldFitness <= tolerance):
+    if(oldFitness - maxFitness <= tolerance):
       return True
   fitnessQueue.put(maxFitness)
   return False
@@ -353,14 +353,23 @@ def stopTest():
 # Main Loop
 #
 #############################################################
-
+readOriginalImageFromFile('INPUT.png')
 imagePopulation = Population()
 fitnessQueue = queue.Queue(MAX_FITNESS_QUEUE_LEN)
-maxFitnessIndividual = imagePopulation.getMaxFitenssIndividual()
+maxFitnessIndividual = imagePopulation.getMaxFitnessIndividual()
 evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
 while(not evolutionComplete):
-  child0, child1 = imagePopulation.crossover()
+  parentNum0 = random.randrange(POPULATION_SIZE)
+  parentNum1 = random.randrange(POPULATION_SIZE)
+  while(parentNum0 == parentNum1): # Avoid crossover with self
+    parentNum1 = random.randrange(POPULATION_SIZE)
+
+  parent0 = imagePopulation.populationMembers[parentNum0]
+  parent1 = imagePopulation.populationMembers[parentNum1]
+  child0, child1 = imagePopulation.crossover(parent0, parent1)
   child0.mutate()
   child1.mutate()
   imagePopulation.eliminateWeakest(child0,child1)
   evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
+
+

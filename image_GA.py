@@ -146,6 +146,7 @@ class Individual:
     for shape in self.shapes:
       if random.randrange(100) < SHAPE_MUTATION_PROB:
         shape.mutate()
+    self.renderImage()
     self.measureFitness(IMAGE)
 
 class Shape:

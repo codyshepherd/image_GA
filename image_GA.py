@@ -24,8 +24,7 @@ VERTEX_MUTATION_PROB = 50
 
 #Stop conditions
 TEST_STOP_TOLERANCE = .1
-MAX_FITNESS_QUEUE_LEN = 100
-MAX_ITERATIONS = 100000
+MAX_FITNESS_QUEUE_LEN = 20
 
 #Input
 IMAGE_FILE_PATH = "INPUT.PNG"
@@ -94,6 +93,14 @@ class Population:
     offspringB.fitness = offspringB.measureFitness(IMAGE)
     
     return offspringA,offspringB
+
+  def getMaxFitnessIndividual(self):
+    """Return the individual with the best fitness"""
+    return min(self.populationMembers, key=lambda x: x.fitness) # Lower fitness values are better since they represent a difference measure between images
+
+  def eliminateWeakest(self, child0, child1):
+  	"""Finds the two weakest members of the population, including the children and kills them off"""
+  	pass
 
 
 class Individual:
@@ -166,9 +173,10 @@ class Individual:
     :return: None
     """
     for shape in self.shapes:
-      if random.randrange(100) <= prob:
-        shape.mutate(VERTEX_MUTATION_PROB)
-
+      if random.randrange(100) < SHAPE_MUTATION_PROB:
+        shape.mutate()
+    self.image = self.renderImage()
+    self.fitness = self.measureFitness(IMAGE)
 
 class Shape:
   """Defines a single polygon.
@@ -206,14 +214,10 @@ class Shape:
   	""" Generate a random color tuple"""
   	return (random.randrange(RGB_MAX), random.randrange(RGB_MAX), random.randrange(RGB_MAX), random.randrange(ALPHA_MAX))
 
-  def mutate(self, prob):
-    """
-    Mutates one or more vertex or the color of the polgyon.
-    
-    :param prob: integer on [0,100] representing the probability with which a vertex
-                 should be changed
-    :return: None
-    """
+  def mutate(self):
+    """Mutates one or more vertex or the color of the polgyon."""
+    guaranteed_mutation = random.randrange(NUM_VERTICES)
+    self.vertexList[guaranteed_mutation] = self.randomVertex()
     self.color = self.randomColor()
     for i in range(len(self.vertexList)):
         if random.randrange(100) <= prob:
@@ -238,7 +242,7 @@ def evaluateStopCondition(fitnessQueue, maxLength, tolerance, maxFitness):
   """
   if(fitnessQueue.qsize() == maxLength): # Only pop value if queue is full
     oldFitness = fitnessQueue.get()
-    if(maxFitness - oldFitness <= tolerance):
+    if(oldFitness - maxFitness <= tolerance):
       return True
   fitnessQueue.put(maxFitness)
   return False
@@ -376,3 +380,23 @@ def stopTest():
 # Main Loop
 #
 #############################################################
+readOriginalImageFromFile('INPUT.png')
+imagePopulation = Population()
+fitnessQueue = queue.Queue(MAX_FITNESS_QUEUE_LEN)
+maxFitnessIndividual = imagePopulation.getMaxFitnessIndividual()
+evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
+while(not evolutionComplete):
+  parentNum0 = random.randrange(POPULATION_SIZE)
+  parentNum1 = random.randrange(POPULATION_SIZE)
+  while(parentNum0 == parentNum1): # Avoid crossover with self
+    parentNum1 = random.randrange(POPULATION_SIZE)
+
+  parent0 = imagePopulation.populationMembers[parentNum0]
+  parent1 = imagePopulation.populationMembers[parentNum1]
+  child0, child1 = imagePopulation.crossover(parent0, parent1)
+  child0.mutate()
+  child1.mutate()
+  imagePopulation.eliminateWeakest(child0,child1)
+  evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
+
+

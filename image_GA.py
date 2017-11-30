@@ -18,9 +18,10 @@ ALPHA_MAX = 255
 # Mutation Probabilites
 CHILD_MUTATION_PROB = 30
 
-SHAPE_MUTATION_PROB = 10
-VERTEX_MUTATION_PROB = 50
-
+COIN_TOSS = 2
+HARD_MUTATION_PROB = 3
+MEDIUM_MUTATION_PROB = 11
+SOFT_MIUTATION_PROB = 25
 
 #Stop conditions
 TEST_STOP_TOLERANCE = .1
@@ -164,17 +165,23 @@ class Individual:
 
     return np.sum((self.image-originalImage)**2)
 
-  def mutate(self, prob):
+  def mutate(self):
     """
     Mutate one or more shapes within the individual.
 
-    :param prob: an integer on [0,100] that represents the probability with which we want
-                 the mutation to occur
     :return: None
     """
     for shape in self.shapes:
-      if random.randrange(100) < SHAPE_MUTATION_PROB:
-        shape.mutate()
+      spin_the_wheel = random.randrange(100)
+      if spin_the_wheel < HARD_MUTATION_PROB:
+        shape.hard_mutate()
+        continue
+      elif spin_the_wheel < MEDIUM_MUTATION_PROB:
+        shape.medium_mutate()
+        continue
+      elif spin_the_wheel < SOFT_MIUTATION_PROB:
+        shape.soft_mutate()
+        
     self.image = self.renderImage()
     self.fitness = self.measureFitness(IMAGE)
 
@@ -214,14 +221,72 @@ class Shape:
   	""" Generate a random color tuple"""
   	return (random.randrange(RGB_MAX), random.randrange(RGB_MAX), random.randrange(RGB_MAX), random.randrange(ALPHA_MAX))
 
-  def mutate(self):
-    """Mutates one or more vertex or the color of the polgyon."""
-    guaranteed_mutation = random.randrange(NUM_VERTICES)
-    self.vertexList[guaranteed_mutation] = self.randomVertex()
-    self.color = self.randomColor()
-    for i in range(len(self.vertexList)):
-        if random.randrange(100) <= prob:
-            self.vertexList[i] = self.randomVertex()
+  def soft_mutate(self):
+    """
+    Mutate one paramater
+
+    The coin toss will decide which parameter of the polygon
+    will be changed. The delta will vary but overall should be a 
+    minute change on the parameter being mutated
+
+    :return none
+    """
+    if random.randrange(COIN_TOSS) == 0:
+      to_mutate = random.randrange(len(self.vertexList))
+      index_to_change = randrange(len(self.vertexList[to_mutate]))
+      change_param = self.vertexList[to_mutate][index_to_change]
+      delta = change_param/2
+      mutated_param = random.randint(delta, change_param)
+      self.vertexList[to_mutate][index_to_change] = mutated_param
+    else:
+      to_mutate = random.randrange(len(self.color))
+      colors = list(self.color)
+      color_change = colors[to_mutate]
+      delta_color = color_change/2
+      mutated_color = randint(delta_color, color_change)
+      colors[to_mutate] = mutated_color
+      self.color = tuple(colors)
+
+  def medium_mutate(self):
+    """
+    Mutate one paramater within the polygon
+
+    Coin toss decides which paramter gets changed. This parameter will be
+    changed to a random number within its min-max 
+
+    :return none
+    """
+    if random.randrange(COIN_TOSS) == 0:
+      to_mutate = randrange(len(self.color))
+      colors = list(self.color)
+      if to_mutate < len(self.color):
+        mutated = random.randrange(RGB_MAX)
+        colors[to_mutate] = mutated
+      else:
+        mutated = random.randrange(ALPHA_MAX)
+      self.color = tuple(colors)
+    else: 
+      to_mutate = random.randrange(len(self.vertexList))
+      change_coord = random.randomrange(len(self.vertexList[to_mutate]))
+      self.vertexList[to_mutate][change_coord] = random.randrange(X_MAX)
+  
+  def hard_mutate(self):
+    """
+    Mutate three paramters within the polygon
+
+    Mutate a color, alpha, and a vertex. Each of the parameters
+    mutated values will be random within its min-max 
+
+    return: none
+    """
+    colors = list(self.color)
+    mutate_color = random.randrange(len(colors) - 1)
+    colors[mutate_color] = random.randrange(RGB_MAX)
+    colors[-1] = random.randrange(ALPHA_MAX)
+    self.color = tuple(colors)
+
+    mutate_vertex = random.randrange(len(self.vertexList))
+    self.vertexList[mutate_vertex] = random.randrange(X_MAX), random.randrange(Y_MAX)
 
   def print(self):
     """Print some debug information in an easy to read format"""

@@ -18,10 +18,11 @@ ALPHA_MAX = 255
 # Mutation Probabilites
 CHILD_MUTATION_PROB = 30
 
+DELTA = 20
 COIN_TOSS = 2
-HARD_MUTATION_PROB = 3
-MEDIUM_MUTATION_PROB = 11
-SOFT_MIUTATION_PROB = 25
+HARD_MUTATION_PROB = 10
+MEDIUM_MUTATION_PROB = 20
+SOFT_MIUTATION_PROB = 30
 
 #Stop conditions
 TEST_STOP_TOLERANCE = .1
@@ -173,13 +174,13 @@ class Individual:
     """
     for shape in self.shapes:
       spin_the_wheel = random.randrange(100)
-      if spin_the_wheel < HARD_MUTATION_PROB:
+      if 0 <= spin_the_wheel < HARD_MUTATION_PROB:
         shape.hard_mutate()
         continue
-      elif spin_the_wheel < MEDIUM_MUTATION_PROB:
+      elif HARD_MUTATION_PROB <= spin_the_wheel < (MEDIUM_MUTATION_PROB + HARD_MUTATION_PROB):
         shape.medium_mutate()
         continue
-      elif spin_the_wheel < SOFT_MIUTATION_PROB:
+      elif spin_the_wheel >= (SOFT_MIUTATION_PROB + MEDIUM_MUTATION_PROB + HARD_MUTATION_PROB):
         shape.soft_mutate()
         
     self.image = self.renderImage()
@@ -235,15 +236,15 @@ class Shape:
       to_mutate = random.randrange(len(self.vertexList))
       index_to_change = randrange(len(self.vertexList[to_mutate]))
       change_param = self.vertexList[to_mutate][index_to_change]
-      delta = change_param/2
-      mutated_param = random.randint(delta, change_param)
+      mutated_param = change_param + random.randint(-DELTA, DELTA)
+      mutated_param = max(min(X_MAX, mutated_param), 0)
       self.vertexList[to_mutate][index_to_change] = mutated_param
     else:
       to_mutate = random.randrange(len(self.color))
       colors = list(self.color)
       color_change = colors[to_mutate]
-      delta_color = color_change/2
-      mutated_color = randint(delta_color, color_change)
+      delta_color = change_param + random.randint(-DELTA, DELTA)
+      mutated_color = max(min(RGB_MAX, delta_color), 0)
       colors[to_mutate] = mutated_color
       self.color = tuple(colors)
 

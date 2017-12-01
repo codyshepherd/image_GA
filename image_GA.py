@@ -2,10 +2,24 @@ import numpy as np
 import random
 from PIL import Image, ImageDraw
 import queue
+import argparse
 
+parser = argparse.ArgumentParser(description="Set Experiment Parameters")
+parser.add_argument('-p', '--population', help='Population Size')
+parser.add_argument('-pr', '--parent', help='Percentage the chosen parent is random, instead of the best')
+parser.add_argument('-c', '--child', help='Child Mutation Probability [1-99]')
+parser.add_argument('-sh', '--shape', help='Shape Mutation Probability [1-99]')
+parser.add_argument('-hh', '--hard', help='Hard Mutation Probability [1-99]')
+parser.add_argument('-m', '--medium', help='Medium Mutation Probability [1-99]')
+parser.add_argument('-s', '--soft', help='Soft Mutation Probability [1-99]')
+parser.add_argument('-d', '--delta', help='Mutation Delta [1-99]')
+parser.add_argument('-t', '--tolerance', help='Stopping Tolerance [0.0-1.0]')
+parser.add_argument('-q', '--queue', help='Max Queue Length')
+nspace = vars(parser.parse_args())
 
 # Performance tuning parameters
-POPULATION_SIZE = 20
+pop = nspace.get('population')
+POPULATION_SIZE = int(pop) if pop else 20
 NUM_POLYGONS = 50
 NUM_VERTICES = 3 # Start with triangle
 
@@ -16,17 +30,32 @@ RGB_MAX = 255
 ALPHA_MAX = 255
 
 # Mutation Probabilites
-CHILD_MUTATION_PROB = 30
-
-DELTA = 20
+pr = nspace.get('parent')
+PERCENT_PARENT_RANDOM = int(pr) if pr else 10
+c = nspace.get('child')
+CHILD_MUTATION_PROB = int(c) if c else 30
+sh = nspace.get('shape')
+SHAPE_MUTATION_PROB = int(sh) if sh else 20
+d = nspace.get('delta')
+DELTA = int(d) if d else 20
 COIN_TOSS = 2
-HARD_MUTATION_PROB = 10
-MEDIUM_MUTATION_PROB = 20
-SOFT_MIUTATION_PROB = 30
+h = nspace.get('hard')
+HARD_MUTATION_PROB = int(h) if h else 10
+m = nspace.get('medium')
+MEDIUM_MUTATION_PROB = int(m) if m else 20
+s = nspace.get('soft')
+SOFT_MUTATION_PROB = int(s) if s else 30
+
+if HARD_MUTATION_PROB + MEDIUM_MUTATION_PROB + SOFT_MUTATION_PROB >= 100:
+    HARD_MUTATION_PROB = 10
+    MEDIUM_MUTATION_PROB = 20
+    SOFT_MUTATION_PROB = 30
 
 #Stop conditions
-TEST_STOP_TOLERANCE = .1
-MAX_FITNESS_QUEUE_LEN = 20
+t = nspace.get('tolerance')
+TEST_STOP_TOLERANCE = float(t) if t else .1
+q = nspace.get('queue')
+MAX_FITNESS_QUEUE_LEN = int(q) if q else 20
 
 #Input
 IMAGE_FILE_PATH = "INPUT.PNG"
@@ -54,6 +83,7 @@ class Population:
       populationArray = []
       for i in range(POPULATION_SIZE):
         populationArray.append(Individual())
+      populationArray = sorted(populationArray, key=lambda x: x.fitness)
       self.populationMembers = np.array(populationArray)
 
   @staticmethod
@@ -98,12 +128,14 @@ class Population:
 
   def getMaxFitnessIndividual(self):
     """Return the individual with the best fitness"""
-    return min(self.populationMembers, key=lambda x: x.fitness) # Lower fitness values are better since they represent a difference measure between images
+    #return min(self.populationMembers, key=lambda x: x.fitness) # Lower fitness values are better since they represent a difference measure between images
+    return self.populationMembers[0]
 
   def eliminateWeakest(self, child0, child1):
-  	"""Finds the two weakest members of the population, including the children and kills them off"""
-  	pass
-
+    """Finds the two weakest members of the population, including the children and kills them off"""
+    newpop = sorted(np.concatenate((self.populationMembers, [child0, child1]), axis=0), key=lambda x: x.fitness)
+    #newpop = sorted(list(np.concatenate(self.populationMembers, [child0, child1])), key=lambda x: x.fitness)
+    self.populationMembers = np.array(newpop[:-2])
 
 class Individual:
   """Defines a set of polygons which form an image.
@@ -172,17 +204,25 @@ class Individual:
 
     :return: None
     """
+    counter = 0
     for shape in self.shapes:
+      shape_mut = random.randrange(100)
+      if shape_mut > SHAPE_MUTATION_PROB:
+        continue
       spin_the_wheel = random.randrange(100)
-      if 0 <= spin_the_wheel < HARD_MUTATION_PROB:
+      if spin_the_wheel <= HARD_MUTATION_PROB:
         shape.hard_mutate()
+        counter += 1
         continue
-      elif HARD_MUTATION_PROB <= spin_the_wheel < (MEDIUM_MUTATION_PROB + HARD_MUTATION_PROB):
+      elif spin_the_wheel <= (MEDIUM_MUTATION_PROB + HARD_MUTATION_PROB):
         shape.medium_mutate()
+        counter += 1
         continue
-      elif spin_the_wheel >= (SOFT_MIUTATION_PROB + MEDIUM_MUTATION_PROB + HARD_MUTATION_PROB):
+      elif spin_the_wheel <= (SOFT_MUTATION_PROB + MEDIUM_MUTATION_PROB + HARD_MUTATION_PROB):
         shape.soft_mutate()
+        counter += 1
         
+    print("Individual mutated " + str(counter) + " shapes.")
     self.image = self.renderImage()
     self.fitness = self.measureFitness(IMAGE)
 
@@ -232,9 +272,11 @@ class Shape:
 
     :return none
     """
+    #print("soft mutate")
+
     if random.randrange(COIN_TOSS) == 0:
       to_mutate = random.randrange(len(self.vertexList))
-      index_to_change = randrange(len(self.vertexList[to_mutate]))
+      index_to_change = random.randrange(len(self.vertexList[to_mutate]))
       change_param = self.vertexList[to_mutate][index_to_change]
       mutated_param = change_param + random.randint(-DELTA, DELTA)
       mutated_param = max(min(X_MAX, mutated_param), 0)
@@ -243,7 +285,7 @@ class Shape:
       to_mutate = random.randrange(len(self.color))
       colors = list(self.color)
       color_change = colors[to_mutate]
-      delta_color = change_param + random.randint(-DELTA, DELTA)
+      delta_color = color_change + random.randint(-DELTA, DELTA)
       mutated_color = max(min(RGB_MAX, delta_color), 0)
       colors[to_mutate] = mutated_color
       self.color = tuple(colors)
@@ -257,18 +299,16 @@ class Shape:
 
     :return none
     """
+    #print("medium mutate")
     if random.randrange(COIN_TOSS) == 0:
-      to_mutate = randrange(len(self.color))
+      to_mutate = random.randrange(len(self.color))
       colors = list(self.color)
-      if to_mutate < len(self.color):
-        mutated = random.randrange(RGB_MAX)
-        colors[to_mutate] = mutated
-      else:
-        mutated = random.randrange(ALPHA_MAX)
+      mutated = random.randrange(RGB_MAX)
+      colors[to_mutate] = mutated
       self.color = tuple(colors)
     else: 
       to_mutate = random.randrange(len(self.vertexList))
-      change_coord = random.randomrange(len(self.vertexList[to_mutate]))
+      change_coord = random.randrange(len(self.vertexList[to_mutate]))
       self.vertexList[to_mutate][change_coord] = random.randrange(X_MAX)
   
   def hard_mutate(self):
@@ -280,6 +320,7 @@ class Shape:
 
     return: none
     """
+    #print("hard mutate")
     colors = list(self.color)
     mutate_color = random.randrange(len(colors) - 1)
     colors[mutate_color] = random.randrange(RGB_MAX)
@@ -446,23 +487,51 @@ def stopTest():
 # Main Loop
 #
 #############################################################
-readOriginalImageFromFile('INPUT.png')
+IMAGE = readOriginalImageFromFile(IMAGE_FILE_PATH)
+
 imagePopulation = Population()
+
 fitnessQueue = queue.Queue(MAX_FITNESS_QUEUE_LEN)
+
 maxFitnessIndividual = imagePopulation.getMaxFitnessIndividual()
 evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
-while(not evolutionComplete):
-  parentNum0 = random.randrange(POPULATION_SIZE)
-  parentNum1 = random.randrange(POPULATION_SIZE)
-  while(parentNum0 == parentNum1): # Avoid crossover with self
-    parentNum1 = random.randrange(POPULATION_SIZE)
 
-  parent0 = imagePopulation.populationMembers[parentNum0]
-  parent1 = imagePopulation.populationMembers[parentNum1]
+counter = 0
+while(not evolutionComplete) and counter < 100:
+  rand_parent = random.randrange(100)
+  if rand_parent <= PERCENT_PARENT_RANDOM:
+    parentNum0 = random.randrange(POPULATION_SIZE)
+    parentNum1 = random.randrange(POPULATION_SIZE)
+    while(parentNum0 == parentNum1): # Avoid crossover with self
+      parentNum1 = random.randrange(POPULATION_SIZE)
+
+    parent0 = imagePopulation.populationMembers[parentNum0]
+    parent1 = imagePopulation.populationMembers[parentNum1]
+  else:
+    parent0 = imagePopulation.populationMembers[0]
+    parent1 = imagePopulation.populationMembers[1]
+
   child0, child1 = imagePopulation.crossover(parent0, parent1)
   child0.mutate()
   child1.mutate()
   imagePopulation.eliminateWeakest(child0,child1)
+  maxFitnessIndividual = imagePopulation.getMaxFitnessIndividual()
   evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
+  counter += 1
+  print("Finished step " + str(counter))
+  print("Fitness queue: " + str(fitnessQueue.queue))
+  print("Pop fitnesses: " + str([x.fitness for x in imagePopulation.populationMembers]))
+  #best = imagePopulation.getMaxFitnessIndividual()
+  #best.saveImageToFile(str(counter))
+
+print("Convergence")
+best = imagePopulation.getMaxFitnessIndividual()
+names = ['pop','child','hard','med','soft','delt','tol','q']
+params = [POPULATION_SIZE, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN]
+img_title = ''.join([a + str(b) for a,b in zip(names,params)])
+best.saveImageToFile(img_title)
+
+
+
 
 

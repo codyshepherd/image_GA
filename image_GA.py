@@ -15,12 +15,19 @@ parser.add_argument('-s', '--soft', help='Soft Mutation Probability [1-99]')
 parser.add_argument('-d', '--delta', help='Mutation Delta [1-99]')
 parser.add_argument('-t', '--tolerance', help='Stopping Tolerance [0.0-1.0]')
 parser.add_argument('-q', '--queue', help='Max Queue Length')
+parser.add_argument('-n', '--num_poly', help='Number of polygons per individual')
+parser.add_argument('-i', '--iters', help='Minimum number of iterations to run')
+
 nspace = vars(parser.parse_args())
+
+i = nspace.get('iters')
+MIN_STEPS =  int(i) if i else 100
 
 # Performance tuning parameters
 pop = nspace.get('population')
 POPULATION_SIZE = int(pop) if pop else 20
-NUM_POLYGONS = 50
+n = nspace.get('num_poly')
+NUM_POLYGONS = int(n) if n else 10
 NUM_VERTICES = 3 # Start with triangle
 
 # Dimensional maxes
@@ -222,7 +229,7 @@ class Individual:
         shape.soft_mutate()
         counter += 1
         
-    print("Individual mutated " + str(counter) + " shapes.")
+    #print("Individual mutated " + str(counter) + " shapes.")
     self.image = self.renderImage()
     self.fitness = self.measureFitness(IMAGE)
 
@@ -494,10 +501,11 @@ imagePopulation = Population()
 fitnessQueue = queue.Queue(MAX_FITNESS_QUEUE_LEN)
 
 maxFitnessIndividual = imagePopulation.getMaxFitnessIndividual()
-evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
+#evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
+evolutionComplete = False
 
 counter = 0
-while(not evolutionComplete) and counter < 100:
+while not evolutionComplete or counter < MIN_STEPS:
   rand_parent = random.randrange(100)
   if rand_parent <= PERCENT_PARENT_RANDOM:
     parentNum0 = random.randrange(POPULATION_SIZE)
@@ -518,16 +526,16 @@ while(not evolutionComplete) and counter < 100:
   maxFitnessIndividual = imagePopulation.getMaxFitnessIndividual()
   evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
   counter += 1
-  print("Finished step " + str(counter))
-  print("Fitness queue: " + str(fitnessQueue.queue))
-  print("Pop fitnesses: " + str([x.fitness for x in imagePopulation.populationMembers]))
+  #print("Finished step " + str(counter))
+  #print("Fitness queue: " + str(fitnessQueue.queue))
+  #print("Pop fitnesses: " + str([x.fitness for x in imagePopulation.populationMembers]))
   #best = imagePopulation.getMaxFitnessIndividual()
   #best.saveImageToFile(str(counter))
 
 print("Convergence")
 best = imagePopulation.getMaxFitnessIndividual()
-names = ['pop','child','hard','med','soft','delt','tol','q']
-params = [POPULATION_SIZE, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN]
+names = ['steps','pop','poly','shape','child','hard','med','soft','delt','tol','q']
+params = [MIN_STEPS,POPULATION_SIZE,NUM_POLYGONS, SHAPE_MUTATION_PROB, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN]
 img_title = ''.join([a + str(b) for a,b in zip(names,params)])
 best.saveImageToFile(img_title)
 

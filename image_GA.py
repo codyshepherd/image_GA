@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw
 import queue
 import argparse
 import uuid
-import pickle
+import json
 
 parser = argparse.ArgumentParser(description="Set Experiment Parameters")
 parser.add_argument('-p', '--population', help='Population Size')
@@ -543,8 +543,8 @@ for i in range(len(names)):
   together[names[i]] = str(params[i])
 img_title = str(uuid.uuid4())
 best.saveImageToFile(img_title)
-with open(img_title + ".txt", 'wb') as fh:
-  pickle.dump(together, fh)
+with open(img_title + ".txt", 'w+') as fh:
+  json.dump(together, fh)
 
 
 

@@ -3,6 +3,8 @@ import random
 from PIL import Image, ImageDraw
 import queue
 import argparse
+import uuid
+import pickle
 
 parser = argparse.ArgumentParser(description="Set Experiment Parameters")
 parser.add_argument('-p', '--population', help='Population Size')
@@ -536,9 +538,13 @@ print("Convergence")
 best = imagePopulation.getMaxFitnessIndividual()
 names = ['steps','pop','poly','shape','child','hard','med','soft','delt','tol','q']
 params = [MIN_STEPS,POPULATION_SIZE,NUM_POLYGONS, SHAPE_MUTATION_PROB, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN]
-img_title = ''.join([a + str(b) for a,b in zip(names,params)])
+together = {}
+for i in range(len(names)):
+  together[names[i]] = str(params[i])
+img_title = str(uuid.uuid4())
 best.saveImageToFile(img_title)
-
+with open(img_title + ".txt", 'wb') as fh:
+  pickle.dump(together, fh)
 
 
 

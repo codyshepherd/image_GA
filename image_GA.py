@@ -25,6 +25,8 @@ nspace = vars(parser.parse_args())
 i = nspace.get('iters')
 MIN_STEPS =  int(i) if i else 100
 
+REC_FITNESS_INTERVAL = MIN_STEPS // 100
+
 # Performance tuning parameters
 pop = nspace.get('population')
 POPULATION_SIZE = int(pop) if pop else 20
@@ -507,6 +509,7 @@ maxFitnessIndividual = imagePopulation.getMaxFitnessIndividual()
 evolutionComplete = False
 
 counter = 0
+fitness_tracker = []
 while not evolutionComplete or counter < MIN_STEPS:
   rand_parent = random.randrange(100)
   if rand_parent <= PERCENT_PARENT_RANDOM:
@@ -527,6 +530,8 @@ while not evolutionComplete or counter < MIN_STEPS:
   imagePopulation.eliminateWeakest(child0,child1)
   maxFitnessIndividual = imagePopulation.getMaxFitnessIndividual()
   evolutionComplete = evaluateStopCondition(fitnessQueue, MAX_FITNESS_QUEUE_LEN, TEST_STOP_TOLERANCE, maxFitnessIndividual.fitness)
+  if counter % REC_FITNESS_INTERVAL == 0:
+    fitness_tracker.append(maxFitnessIndividual.fitness)
   counter += 1
   #print("Finished step " + str(counter))
   #print("Fitness queue: " + str(fitnessQueue.queue))
@@ -536,8 +541,8 @@ while not evolutionComplete or counter < MIN_STEPS:
 
 print("Convergence")
 best = imagePopulation.getMaxFitnessIndividual()
-names = ['steps','pop','poly','shape','child','hard','med','soft','delt','tol','q','final']
-params = [MIN_STEPS,POPULATION_SIZE,NUM_POLYGONS, SHAPE_MUTATION_PROB, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN, best.fitness]
+names = ['steps','pop','poly','shape','child','hard','med','soft','delt','tol','q','final','tracker']
+params = [MIN_STEPS,POPULATION_SIZE,NUM_POLYGONS, SHAPE_MUTATION_PROB, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN, best.fitness, fitness_tracker]
 together = {}
 for i in range(len(names)):
   together[names[i]] = str(params[i])

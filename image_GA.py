@@ -536,8 +536,8 @@ while not evolutionComplete or counter < MIN_STEPS:
 
 print("Convergence")
 best = imagePopulation.getMaxFitnessIndividual()
-names = ['steps','pop','poly','shape','child','hard','med','soft','delt','tol','q']
-params = [MIN_STEPS,POPULATION_SIZE,NUM_POLYGONS, SHAPE_MUTATION_PROB, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN]
+names = ['steps','pop','poly','shape','child','hard','med','soft','delt','tol','q','final']
+params = [MIN_STEPS,POPULATION_SIZE,NUM_POLYGONS, SHAPE_MUTATION_PROB, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN, best.fitness]
 together = {}
 for i in range(len(names)):
   together[names[i]] = str(params[i])

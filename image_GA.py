@@ -1,4 +1,5 @@
 import numpy as np
+from skimage.measure import compare_ssim as ssim
 import random
 from PIL import Image, ImageDraw
 import queue
@@ -25,7 +26,7 @@ nspace = vars(parser.parse_args())
 i = nspace.get('iters')
 MIN_STEPS =  int(i) if i else 100
 
-REC_FITNESS_INTERVAL = MIN_STEPS // 100
+REC_FITNESS_INTERVAL = (MIN_STEPS // 100) if MIN_STEPS >= 100 else 1
 
 # Performance tuning parameters
 pop = nspace.get('population')
@@ -207,7 +208,9 @@ class Individual:
     if type(originalImage) != type(self.image):
       raise TypeError("images must be of same type!")
 
-    return np.sum((self.image-originalImage)**2)
+    #return np.sum((self.image-originalImage)**2)
+    fitness = ssim(self.image, originalImage, multichannel=True)
+    return fitness
 
   def mutate(self):
     """

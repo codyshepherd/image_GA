@@ -217,7 +217,7 @@ class Individual:
     if FITNESS_CHOICE==1:
       return mse(self.image, originalImage)
     else:
-      return ssim(self.image, originalImage, multichannel=True)
+      return -ssim(self.image, originalImage, multichannel=True)
 
   def mutate(self):
     """

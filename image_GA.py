@@ -1,5 +1,6 @@
 import numpy as np
 from skimage.measure import compare_ssim as ssim
+from skimage.measure import compare_mse as mse
 import random
 from PIL import Image, ImageDraw
 import queue
@@ -20,6 +21,7 @@ parser.add_argument('-t', '--tolerance', help='Stopping Tolerance [0.0-1.0]')
 parser.add_argument('-q', '--queue', help='Max Queue Length')
 parser.add_argument('-n', '--num_poly', help='Number of polygons per individual')
 parser.add_argument('-i', '--iters', help='Minimum number of iterations to run')
+parser.add_argument('-f', '--fitness', help='Choose fitness function. 1=MSE, 2=SSIM', choices=set('12'))
 
 nspace = vars(parser.parse_args())
 
@@ -27,6 +29,9 @@ i = nspace.get('iters')
 MIN_STEPS =  int(i) if i else 100
 
 REC_FITNESS_INTERVAL = (MIN_STEPS // 100) if MIN_STEPS >= 100 else 1
+
+f = nspace.get('fitness')
+FITNESS_CHOICE = int(f) if f else 1
 
 # Performance tuning parameters
 pop = nspace.get('population')
@@ -209,8 +214,10 @@ class Individual:
       raise TypeError("images must be of same type!")
 
     #return np.sum((self.image-originalImage)**2)
-    fitness = ssim(self.image, originalImage, multichannel=True)
-    return fitness
+    if FITNESS_CHOICE==1:
+      return mse(self.image, originalImage)
+    else:
+      return ssim(self.image, originalImage, multichannel=True)
 
   def mutate(self):
     """
@@ -544,8 +551,8 @@ while not evolutionComplete or counter < MIN_STEPS:
 
 print("Convergence")
 best = imagePopulation.getMaxFitnessIndividual()
-names = ['steps','pop','poly','shape','child','hard','med','soft','delt','tol','q','final','tracker']
-params = [MIN_STEPS,POPULATION_SIZE,NUM_POLYGONS, SHAPE_MUTATION_PROB, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN, best.fitness, fitness_tracker]
+names = ['steps','pop','poly','shape','child','hard','med','soft','delt','tol','q','final','tracker', 'fitness']
+params = [MIN_STEPS,POPULATION_SIZE,NUM_POLYGONS, SHAPE_MUTATION_PROB, CHILD_MUTATION_PROB, HARD_MUTATION_PROB, MEDIUM_MUTATION_PROB, SOFT_MUTATION_PROB, DELTA, TEST_STOP_TOLERANCE, MAX_FITNESS_QUEUE_LEN, best.fitness, fitness_tracker, FITNESS_CHOICE]
 together = {}
 for i in range(len(names)):
   together[names[i]] = str(params[i])

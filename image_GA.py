@@ -41,8 +41,10 @@ NUM_POLYGONS = int(n) if n else 10
 NUM_VERTICES = 3 # Start with triangle
 
 # Dimensional maxes
-X_MAX = 1024
-Y_MAX = 1024
+#X_MAX = 1024
+X_MAX = 225
+#Y_MAX = 1024
+Y_MAX = 225
 RGB_MAX = 255
 ALPHA_MAX = 255
 
@@ -75,7 +77,7 @@ q = nspace.get('queue')
 MAX_FITNESS_QUEUE_LEN = int(q) if q else 20
 
 #Input
-IMAGE_FILE_PATH = "INPUT.PNG"
+IMAGE_FILE_PATH = "INPUT.png"
 IMAGE = np.array([])
 RANDOM_SEED = 1
 random.seed = RANDOM_SEED
@@ -150,9 +152,13 @@ class Population:
 
   def eliminateWeakest(self, child0, child1):
     """Finds the two weakest members of the population, including the children and kills them off"""
-    newpop = sorted(np.concatenate((self.populationMembers, [child0, child1]), axis=0), key=lambda x: x.fitness)
     #newpop = sorted(list(np.concatenate(self.populationMembers, [child0, child1])), key=lambda x: x.fitness)
-    self.populationMembers = np.array(newpop[:-2])
+    newpop = sorted(np.concatenate((self.populationMembers, [child0, child1]), axis=0), key=lambda x: x.fitness)
+    half = len(self.populationMembers)//2
+    if self.populationMembers[half].fitness == self.populationMembers[0].fitness:
+        self.populationMembers = np.array(newpop[2:])
+    else:
+        self.populationMembers = np.array(newpop[:-2])
 
 class Individual:
   """Defines a set of polygons which form an image.
@@ -525,14 +531,14 @@ while not evolutionComplete or counter < MIN_STEPS:
   if rand_parent <= PERCENT_PARENT_RANDOM:
     parentNum0 = random.randrange(POPULATION_SIZE)
     parentNum1 = random.randrange(POPULATION_SIZE)
-    while(parentNum0 == parentNum1): # Avoid crossover with self
+    while(imagePopulation.populationMembers[parentNum0].fitness == imagePopulation.populationMembers[parentNum1].fitness): # Avoid crossover with self
       parentNum1 = random.randrange(POPULATION_SIZE)
 
     parent0 = imagePopulation.populationMembers[parentNum0]
     parent1 = imagePopulation.populationMembers[parentNum1]
   else:
     parent0 = imagePopulation.populationMembers[0]
-    parent1 = imagePopulation.populationMembers[1]
+    parent1 = imagePopulation.populationMembers[-1]
 
   child0, child1 = imagePopulation.crossover(parent0, parent1)
   child0.mutate()

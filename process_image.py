@@ -16,6 +16,8 @@ txts = [f for f in files if f[-4:]=='.txt']
 #pics = [f for f in files if f[-4:]=='.png']
 
 for t in txts:
+    if t == 'requirements.txt':
+        continue
     print(str(t))
     with open(str(t), 'r') as fh:
         stuff = json.load(fh)
